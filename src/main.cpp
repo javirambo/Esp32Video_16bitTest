@@ -80,11 +80,16 @@ void renderTask(void *param)
 // initial setup
 void setup()
 {
+  Serial.begin(115200);
+
   // initializing i2s vga (with only one framebuffer)
   vga.init(vga.MODE320x200, pinConfig);
   TaskHandle_t xHandle = NULL;
   xTaskCreatePinnedToCore(renderTask, "Render1", 2000, taskData[0], (2 | portPRIVILEGE_BIT), &xHandle, 0);
   xTaskCreatePinnedToCore(renderTask, "Render2", 2000, taskData[1], (2 | portPRIVILEGE_BIT), &xHandle, 1);
+
+  Serial.println("Inicializado Vga3bit 320x400");
+  // vga.maxXRes
 }
 
 // just draw each frame
