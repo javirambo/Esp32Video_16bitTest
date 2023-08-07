@@ -7,9 +7,11 @@
 #include <Ressources/Font6x8.h>
 
 // VGA Device
+// VGA3Bit vga;  //NO LO PUDE HACER ADAR...
 VGA6Bit vga;
 // Pin presets are avaialable for: VGAv01, VGABlackEdition, VGAWhiteEdition, PicoVGA
-const PinConfig &pinConfig = VGA6Bit::PicoVGA;
+// const PinConfig &pinConfig = VGA6Bit::PicoVGA;
+const PinConfig &pinConfig = VGA6Bit::Pico3bVGA;
 
 int taskData[2][3] = {
     {0, 0, 160},
@@ -61,7 +63,7 @@ int colors[] = {
 
 void renderTask(void *param)
 {
-  int *data = (int *)param;
+  int *data = (int *)param; // 0,0,160 o 0,160,320
   while (true)
   {
     while (!data[0])
@@ -82,14 +84,22 @@ void setup()
 {
   Serial.begin(115200);
 
+  // estos parametros son para mi monitor (javier)
+  Mode MiMonitor(8, 54, 28, 360, 11, 2, 32, 480, 2, 14161000, 1, 0);
+
   // initializing i2s vga (with only one framebuffer)
-  vga.init(vga.MODE320x200, pinConfig);
+  // vga.init(vga.MODE320x240, pinConfig); // ok, muy bien
+  // vga.init(vga.MODE360x200, pinConfig); // ok, se puede ajustar el monitor manual, el autoajuste lo desajusta.
+  vga.init(MiMonitor, pinConfig);
+
   TaskHandle_t xHandle = NULL;
   xTaskCreatePinnedToCore(renderTask, "Render1", 2000, taskData[0], (2 | portPRIVILEGE_BIT), &xHandle, 0);
   xTaskCreatePinnedToCore(renderTask, "Render2", 2000, taskData[1], (2 | portPRIVILEGE_BIT), &xHandle, 1);
 
-  Serial.println("Inicializado Vga3bit 320x400");
-  // vga.maxXRes
+  Serial.print("VGA Inicializado: ");
+  Serial.print(vga.mode.hRes);
+  Serial.print(" x ");
+  Serial.print(vga.mode.vRes);
 }
 
 // just draw each frame
