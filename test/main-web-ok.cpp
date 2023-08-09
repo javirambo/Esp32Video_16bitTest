@@ -64,7 +64,7 @@ void setup()
     vga.setFrameBufferCount(2);
     // Mode MiMonitor(8, 54, 28, 360, 11, 2, 32, 480, 2, 14161000, 1, 0);
     // vga.init(MiMonitor, pinConfig);
-    // vga.init(vga.MODE320x240, pinConfig); // ok, muy bien
+    //  vga.init(vga.MODE320x240, pinConfig); // ok, muy bien
     vga.init(vga.MODE360x200, pinConfig); // ok, se puede ajustar el monitor manual, el autoajuste lo desajusta.
 
     // make the background blue

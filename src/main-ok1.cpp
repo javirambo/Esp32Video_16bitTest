@@ -6,20 +6,16 @@
 #include <ESP32Lib.h>
 #include <Ressources/Font6x8.h>
 
-// VGA Device
-// VGA3Bit vga;  //NO LO PUDE HACER ADAR...
 VGA6Bit vga;
-// Pin presets are avaialable for: VGAv01, VGABlackEdition, VGAWhiteEdition, PicoVGA
-// const PinConfig &pinConfig = VGA6Bit::PicoVGA;
-const PinConfig &pinConfig = VGA6Bit::Pico3bVGA;
+const PinConfig &pinConfig = VGA6Bit::PicoVGA;
 
 int taskData[2][3] = {
-    {0, 0, 160},
-    {0, 160, 320},
+    {0, 0, 180},
+    {0, 180, 360},
 };
 
 static float v = -1.5;
-static float vs = 0.001;
+static float vs = 0.0005;
 
 // https://en.wikipedia.org/wiki/Julia_set#Pseudocode_for_normal_Julia_sets
 int julia(int x, int y, float cx, float cy)
@@ -28,6 +24,24 @@ int julia(int x, int y, float cx, float cy)
   int zy = ((y - 99.5f) * (1.f / 200.f * 3.0f)) * (1 << 12);
   int i = 0;
   const int maxi = 17;
+  int cxi = cx;
+  int cyi = cy * (1 << 12);
+  while (zx * zx + zy * zy < (4 << 24) && i < maxi)
+  {
+    int xtemp = (zx * zx - zy * zy) >> 12;
+    zy = ((zx * zy) >> 11) + cyi;
+    zx = xtemp + cxi;
+    i++;
+  }
+  return i;
+}
+
+int multiJulia(int x, int y, float cx, float cy)
+{
+  int zx = ((x - 159.5f) * (1.f / 360.f * 5.0f)) * (1 << 12);
+  int zy = ((y - 99.5f) * (1.f / 240.f * 3.0f)) * (1 << 12);
+  int i = 0;
+  const int maxi = 22;
   int cxi = cx;
   int cyi = cy * (1 << 12);
   while (zx * zx + zy * zy < (4 << 24) && i < maxi)
@@ -63,7 +77,7 @@ int colors[] = {
 
 void renderTask(void *param)
 {
-  int *data = (int *)param; // 0,0,160 o 0,160,320
+  int *data = (int *)param;
   while (true)
   {
     while (!data[0])
@@ -71,7 +85,7 @@ void renderTask(void *param)
     for (int y = 0; y < 100; y++)
       for (int x = data[1]; x < data[2]; x++)
       {
-        int c = colors[julia(x, y, -0.74543f, v)];
+        int c = colors[multiJulia(x, y, -0.74543f, v)];
         vga.dotFast(x, y, c);
         vga.dotFast(319 - x, 199 - y, c);
       }
@@ -85,12 +99,21 @@ void setup()
   Serial.begin(115200);
 
   // estos parametros son para mi monitor (javier)
-  Mode MiMonitor(8, 54, 28, 360, 11, 2, 32, 480, 2, 14161000, 1, 0);
-
-  // initializing i2s vga (with only one framebuffer)
-  // vga.init(vga.MODE320x240, pinConfig); // ok, muy bien
-  // vga.init(vga.MODE360x200, pinConfig); // ok, se puede ajustar el monitor manual, el autoajuste lo desajusta.
+  // 360*480
+  Mode MiMonitor(8, 54, 28, 360, 11, 2, 32, 480, 2, 14161000, 1, 1);
   vga.init(MiMonitor, pinConfig);
+
+  // 320*400
+  // vga.init(vga.MODE320x400, pinConfig); //
+
+  // 320*400
+  // vga.init(vga.MODE320x200, pinConfig); // ok, muy bien
+
+  // 320*480
+  // vga.init(vga.MODE320x240, pinConfig); // ok, muy bien
+
+  // 360*400
+  // vga.init(vga.MODE360x200, pinConfig); // ok, se puede ajustar el monitor manual, el autoajuste lo desajusta.
 
   TaskHandle_t xHandle = NULL;
   xTaskCreatePinnedToCore(renderTask, "Render1", 2000, taskData[0], (2 | portPRIVILEGE_BIT), &xHandle, 0);
@@ -111,9 +134,11 @@ void loop()
   ot = t;
   taskData[0][0] = 1;
   taskData[1][0] = 1;
+
   // waiting for task to finish
   while (taskData[0][0] || taskData[1][0])
     delay(1);
+
   v += vs * dt;
   if (v > 1.5f)
   {

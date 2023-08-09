@@ -16,7 +16,7 @@
 // VGA Device using an interrupt to unpack the pixels from 4bit to 16bit for the I²S
 // This takes some CPU time in the background but is able to fit a frame buffer in the memory
 VGA6Bit vga;
-const PinConfig &pinConfig = VGA6Bit::Pico3bVGA;
+const PinConfig &pinConfig = VGA6Bit::PicoVGA;
 
 void FontTest()
 {
@@ -96,6 +96,7 @@ void setup()
   // vga.init(vga.MODE360x200, pinConfig);
   vga.setFont(Font8x8);
 }
+
 
 /// draws a bouncing balls
 void balls()
